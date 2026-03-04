@@ -8,14 +8,9 @@
 # # referencing them here with servers: cache_store
 
 #
-# production:
-#   url:
-#   # list of redis servers to use in the ring
-#   - redis://redis01
-#   - redis://redis02
-#   # off, compact, or json
-#   # log_style: compact
-#   connect_timeout: 0.5
+production:
+  url: <%= ENV['REDIS_URL'] %>
+  connect_timeout: 0.5
 #   circuit_breaker:
 #     error_threshold: 1
 #     error_timeout: 2

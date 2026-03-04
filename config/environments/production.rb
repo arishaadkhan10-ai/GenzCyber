@@ -40,9 +40,8 @@ Rails.application.configure do
   # If you have no front-end server that supports something like X-Sendfile,
   # just comment this out and Rails will serve the files
 
-  # Disable Rails's static asset server
-  # In production, Apache or nginx will already do this
-  config.public_file_server.enabled = false
+  # Enable Rails's static asset server
+  config.public_file_server.enabled = true
 
   # Enable serving of images, stylesheets, and javascripts from an asset server
   # config.action_controller.asset_host = "http://assets.example.com"
