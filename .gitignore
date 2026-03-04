@@ -27,6 +27,7 @@ CLAUDE.local.md
 !/config/credentials.test.yml
 !/config/crystalball.yml
 !/config/graphql_persisted_queries.yml
+!/config/brandable_css.yml
 /config/environments/*-local.rb
 /config/locales/generated/
 /config/saml/*
@@ -83,6 +84,8 @@ docker-compose/api-gateway.override.yml
 /packages/*/lib
 /packages/*/coverage/
 /packages/*/coverage-js/
+
+!/packages/canvas-media/es
 
 # pact artifacts
 /reports/
