@@ -1,10 +1,4 @@
 paths:
-  brandable_variables_json: "app/stylesheets/brandable_variables.json"
-
-indices:
-  handlebars:
-    keysz: 64
-paths:
   public_dir: public
   sass_dir: app/stylesheets
   all_sass_bundles: '{.,gems/plugins/*}/app/stylesheets/**/[^_]*.s[ac]ss'

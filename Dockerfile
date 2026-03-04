@@ -71,6 +71,7 @@ ENV COMPILE_ASSETS_NPM_INSTALL=0
 ENV COMPILE_ASSETS_STYLEGUIDE=0
 RUN chmod +x bin/rails && chmod +x script/install_hooks || true
 RUN chmod +x packages/canvas-rce/scripts/build-canvas || true
+RUN chmod +x packages/canvas-media/scripts/installTranslations.js || true
 RUN unset RUBY && bundle config --global build.nokogiri --use-system-libraries && \
   bundle config --global build.ffi --enable-system-libffi && \
   bundle install
