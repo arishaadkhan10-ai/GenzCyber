@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+packages/*/node_modules/
+
+# Build artifacts
+dist/
+build/
+coverage/
+*.log
+
+# Development files
+packages/canvas-rce/demo/
+packages/canvas-rce/__tests__/
+packages/canvas-rce/doc/
+packages/*/demo/
+packages/*/__tests__/
+
+# Cache
+.cache/
+.nyc_output/
+.eslintcache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+log/
+tmp/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+.dockerignore
+
+# Large development files
+*.tar.gz
+*.zip
+
+# Additional large directories
+gems/plugins/*/spec/
+gems/plugins/*/test/
+spec/
+__tests__/
+jest/
+coverage/
+.github/
+.vscode/
+
+# Documentation
+doc/
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# Config files that aren't needed for deployment
+.eslint*
+.prettierrc*
+.tsconfig*
+jest.config*
+webpack.*
+
+# Lock files (will be regenerated)
+yarn.lock
+package-lock.json
