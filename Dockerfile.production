@@ -75,5 +75,6 @@ RUN unset RUBY && bundle config --global build.nokogiri --use-system-libraries &
   bundle install
 RUN yarn install --frozen-lockfile || yarn install --frozen-lockfile --network-concurrency 1 && \
   cd packages/canvas-rce && yarn build:es && cd ../.. && \
+  cd packages/canvas-media && yarn build:es && cd ../.. && \
   bin/rails canvas:compile_assets --trace && \
   rm -rf node_modules

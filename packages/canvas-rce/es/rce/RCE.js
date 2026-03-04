@@ -19,7 +19,7 @@
 import React from 'react'
 
 export default function RCE(props) {
-  return <div>RCE Component</div>
+  return React.createElement('div', null, 'RCE Component')
 }
 
 export * from './plugins/shared/Previewable'
