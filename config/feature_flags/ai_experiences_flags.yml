@@ -1,0 +1,37 @@
+---
+ai_experiences:
+  state: hidden
+  applies_to: Course
+  shadow: true
+  display_name: AI Experiences
+  description: Introduces AI Experiences - a new Canvas Learning Object.
+  touch_context: true
+  environments:
+    ci:
+      state: allowed_on
+    development:
+      state: allowed_on
+ai_experiences_evaluation:
+  state: hidden
+  applies_to: Course
+  shadow: true
+  display_name: AI Experiences Evaluation
+  description: Enables the evaluation feature for AI Experiences conversations.
+  touch_context: true
+  environments:
+    ci:
+      state: allowed_on
+    development:
+      state: allowed_on
+ai_experiences_context_file_upload:
+  state: hidden
+  applies_to: Course
+  shadow: true
+  display_name: AI Experience Context File Upload
+  description: Enables context file upload for AI Experiences. Requires AI Experiences feature flag to be enabled.
+  touch_context: true
+  environments:
+    ci:
+      state: allowed_on
+    development:
+      state: allowed_on

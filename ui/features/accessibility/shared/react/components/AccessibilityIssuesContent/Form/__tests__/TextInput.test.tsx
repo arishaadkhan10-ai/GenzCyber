@@ -1,0 +1,264 @@
+/*
+ * Copyright (C) 2025 - present Instructure, Inc.
+ *
+ * This file is part of Canvas.
+ *
+ * Canvas is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, version 3 of the License.
+ *
+ * Canvas is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import {createElement} from 'react'
+import {render, screen, fireEvent} from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import {setupServer} from 'msw/node'
+import {http, HttpResponse} from 'msw'
+
+import {FormType, IssueWorkflowState} from '../../../../types'
+import TextInputForm from '../TextInputForm'
+import {useAccessibilityScansStore} from '../../../../stores/AccessibilityScansStore'
+
+const server = setupServer()
+
+// Mock the Button component to handle ai-primary color
+vi.mock('@instructure/ui-buttons', async () => {
+  const originalModule =
+    await vi.importActual<typeof import('@instructure/ui-buttons')>('@instructure/ui-buttons')
+  return {
+    ...originalModule,
+    Button: (props: any) => {
+      // Convert ai-primary to primary for testing
+      const testProps = {
+        ...props,
+        color: props.color === 'ai-primary' ? 'primary' : props.color,
+      }
+      return createElement(originalModule.Button as any, testProps)
+    },
+  }
+})
+
+vi.mock('../../../../stores/AccessibilityScansStore')
+
+describe('TextInputForm', () => {
+  beforeAll(() => server.listen())
+  afterAll(() => server.close())
+  afterEach(() => {
+    server.resetHandlers()
+  })
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    ;(useAccessibilityScansStore as unknown as any).mockImplementation((selector: any) => {
+      const state = {isAiTableCaptionGenerationEnabled: true}
+      return selector(state)
+    })
+  })
+  const defaultProps = {
+    issue: {
+      id: 'test-id',
+      ruleId: 'test-rule',
+      displayName: 'Test rule',
+      message: 'Test message',
+      why: 'Test why',
+      element: 'test-element',
+      path: 'test-path',
+      workflowState: IssueWorkflowState.Active,
+      form: {
+        type: FormType.TextInput,
+        label: 'Test Label',
+      },
+    },
+    value: '',
+    onChangeValue: vi.fn(),
+    onValidationChange: vi.fn(),
+  }
+
+  const propsWithGenerateOption = {
+    ...defaultProps,
+    issue: {
+      ...defaultProps.issue,
+      form: {
+        ...defaultProps.issue.form,
+        canGenerateFix: true,
+        generateButtonLabel: 'Generate Alt Text',
+      },
+    },
+  }
+
+  it('renders without crashing', () => {
+    render(<TextInputForm {...propsWithGenerateOption} />)
+    expect(screen.getByTestId('text-input-form')).toBeInTheDocument()
+  })
+
+  it('displays the correct label', () => {
+    render(<TextInputForm {...propsWithGenerateOption} />)
+    expect(screen.getByText('Test Label')).toBeInTheDocument()
+  })
+
+  it('displays the provided value', () => {
+    const propsWithValue = {
+      ...defaultProps,
+      value: 'test value',
+    }
+    render(<TextInputForm {...propsWithValue} />)
+    const input = screen.getByTestId('text-input-form')
+    expect(input).toHaveValue('test value')
+  })
+
+  it('calls onChangeValue when the input value changes', async () => {
+    render(<TextInputForm {...propsWithGenerateOption} />)
+    const input = screen.getByTestId('text-input-form')
+    await userEvent.type(input, 'a')
+    expect(defaultProps.onChangeValue).toHaveBeenCalledWith('a')
+  })
+
+  it('displays the error message when an error is provided', () => {
+    const propsWithError = {
+      ...defaultProps,
+      error: 'Error message',
+    }
+    render(<TextInputForm {...propsWithError} />)
+    expect(screen.getByText('Error message')).toBeInTheDocument()
+  })
+
+  it('handles errors when generate API call fails', async () => {
+    // Mock API failure
+    server.use(
+      // Match both /generate and //generate (double slash from URL construction)
+      http.post('**/generate/table_caption', () => {
+        return new HttpResponse(null, {status: 500})
+      }),
+    )
+
+    render(<TextInputForm {...propsWithGenerateOption} />)
+
+    // Click the generate button
+    const generateButton = screen.getByText('Generate Alt Text')
+    fireEvent.click(generateButton)
+
+    // Verify loading indicator appears
+    expect(screen.getByText('Generating...')).toBeInTheDocument()
+
+    // Verify that onChangeValue was not called (since the API failed)
+    expect(defaultProps.onChangeValue).not.toHaveBeenCalled()
+  })
+
+  it('focuses the input when the form is refocused', () => {
+    const {container} = render(<TextInputForm {...propsWithGenerateOption} />)
+    const input = container.querySelector('input')
+    expect(input).not.toHaveFocus()
+    input?.focus()
+    expect(input).toHaveFocus()
+  })
+
+  describe('AI generation feature flag', () => {
+    it('shows generate button when feature flag is enabled', () => {
+      ;(useAccessibilityScansStore as unknown as any).mockImplementation((selector: any) => {
+        const state = {isAiTableCaptionGenerationEnabled: true}
+        return selector(state)
+      })
+
+      render(<TextInputForm {...propsWithGenerateOption} />)
+
+      expect(screen.getByText('Generate Alt Text')).toBeInTheDocument()
+    })
+
+    it('hides generate button when feature flag is disabled', () => {
+      ;(useAccessibilityScansStore as unknown as any).mockImplementation((selector: any) => {
+        const state = {isAiTableCaptionGenerationEnabled: false}
+        return selector(state)
+      })
+
+      render(<TextInputForm {...propsWithGenerateOption} />)
+
+      expect(screen.queryByText('Generate Alt Text')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Error display', () => {
+    it('does not show errors when error prop is not provided', () => {
+      render(<TextInputForm {...defaultProps} />)
+
+      expect(screen.queryByText('Caption cannot be empty.')).not.toBeInTheDocument()
+    })
+
+    it('shows error message when error prop is provided', () => {
+      const propsWithError = {
+        ...defaultProps,
+        error: 'Caption cannot be empty.',
+      }
+      render(<TextInputForm {...propsWithError} />)
+
+      expect(screen.getByText('Caption cannot be empty.')).toBeInTheDocument()
+    })
+
+    it('does not show validation errors on initial mount with empty input', () => {
+      render(<TextInputForm {...defaultProps} />)
+
+      expect(screen.queryByText('Caption cannot be empty.')).not.toBeInTheDocument()
+    })
+
+    it('does not show error when user enters non-empty text', async () => {
+      render(<TextInputForm {...defaultProps} />)
+
+      const input = screen.getByTestId('text-input-form')
+      await userEvent.type(input, 'Valid caption')
+
+      expect(screen.queryByText('Caption cannot be empty.')).not.toBeInTheDocument()
+    })
+
+    it('shows error when user clears the input', async () => {
+      const propsWithValue = {
+        ...defaultProps,
+        value: 'Some text',
+      }
+
+      render(<TextInputForm {...propsWithValue} />)
+
+      const input = screen.getByTestId('text-input-form')
+      await userEvent.clear(input)
+
+      expect(defaultProps.onValidationChange).toHaveBeenCalledWith(
+        false,
+        'Caption cannot be empty.',
+      )
+    })
+
+    it('shows error when user enters only whitespace', async () => {
+      render(<TextInputForm {...defaultProps} />)
+
+      const input = screen.getByTestId('text-input-form')
+      await userEvent.type(input, '   ')
+
+      expect(defaultProps.onValidationChange).toHaveBeenCalledWith(
+        false,
+        'Caption cannot be empty.',
+      )
+    })
+
+    it('clears error when user enters valid text after error', async () => {
+      render(<TextInputForm {...defaultProps} />)
+
+      const input = screen.getByTestId('text-input-form')
+
+      await userEvent.type(input, '   ')
+      expect(defaultProps.onValidationChange).toHaveBeenCalledWith(
+        false,
+        'Caption cannot be empty.',
+      )
+
+      await userEvent.clear(input)
+      await userEvent.type(input, 'Valid caption')
+
+      expect(defaultProps.onValidationChange).toHaveBeenLastCalledWith(true)
+    })
+  })
+})
