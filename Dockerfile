@@ -68,6 +68,7 @@ COPY --chown=docker:docker . /usr/src/app
 RUN mkdir -p tmp/files
 ENV COMPILE_ASSETS_BRAND_CONFIGS=0
 ENV COMPILE_ASSETS_NPM_INSTALL=0
+RUN chmod +x bin/rails && chmod +x script/install_hooks || true
 RUN unset RUBY && bundle config --global build.nokogiri --use-system-libraries && \
   bundle config --global build.ffi --enable-system-libffi && \
   bundle install
